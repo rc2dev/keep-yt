@@ -14,7 +14,6 @@ class ConfigError(Exception):
 @dataclass
 class Config:
     db_path: Path
-    report_path: Path
     ignorelist_path: Path
     playlists_url: str
     yt_dlp: list[str]
@@ -53,7 +52,6 @@ def _parse_config(cfg: dict) -> Config:
     try:
         cfg_casted = {
             "db_path": Path(cfg_fmt["db_path"]),
-            "report_path": Path(cfg_fmt["report_path"]),
             "ignorelist_path": Path(cfg_fmt["ignorelist_path"]),
             "playlists_url": cfg_fmt["playlists_url"],
             "yt_dlp": shlex.split(cfg_fmt["yt_dlp"]),

@@ -1,12 +1,14 @@
 from pathlib import Path
 import sqlite3
 from datetime import datetime, UTC
-from keep_yt.db.queries import find_unavailable_videos
+from keep_yt.db.queries import find_unavailable_videos, db_is_initialized
 
 
-def write_report(
-    conn: sqlite3.Connection, ignorelist_path: Path, report_path: Path
-) -> None:
+def print_report(conn: sqlite3.Connection, ignorelist_path: Path) -> None:
+    if not db_is_initialized(conn):
+        print("Database is not initialized. Run 'collect' command first.")
+        return
+
     rows = find_unavailable_videos(conn)
     rows = exclude_ignored_videos(rows, ignorelist_path)
 
@@ -50,11 +52,7 @@ def write_report(
         for video_id in ids:
             lines.append(video_id)
 
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(lines) + "\n")
-
-    print(f"Report written to: '{report_path.name}'.")
+    print("\n".join(lines) + "\n")
 
 
 def exclude_ignored_videos(rows: list, ignorelist_path: Path) -> list:

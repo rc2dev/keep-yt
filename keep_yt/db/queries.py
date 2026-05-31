@@ -22,3 +22,14 @@ def find_unavailable_videos(conn: sqlite3.Connection):
         ORDER BY s.title
         """)
     return cur.fetchall()
+
+
+def db_is_initialized(conn: sqlite3.Connection) -> bool:
+    cur = conn.execute("""
+        SELECT COUNT(*)
+        FROM sqlite_master
+        WHERE type='table'
+    """)
+
+    initialized = cur.fetchone()[0] > 0
+    return initialized

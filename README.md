@@ -18,11 +18,11 @@ This application aims to tackle this, storing video data and telling the user wh
 
 ## Usage
 
-Run this application periodically. 
+Run the `collect` command periodically.
 
 It saves metadata for all videos in your playlists.
 
-Over time, it will detect videos that have become unavailable and generate a report at the path you specify. Obviously, this becomes more useful after a few runs.
+Over time, the application will detect videos that have become unavailable. Generate a report with the `report` command. Obviously, this becomes more useful after a few runs.
 
 If you notice any missing one that weren't detected, simply browse the database, as all the metadata has been preserved since the first run.
 
