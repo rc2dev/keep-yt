@@ -10,49 +10,50 @@ def print_report(conn: sqlite3.Connection, ignorelist_path: Path) -> None:
         return
 
     rows = find_unavailable_videos(conn)
-    rows = exclude_ignored_videos(rows, ignorelist_path)
+    filtered_rows = exclude_ignored_videos(rows, ignorelist_path)
 
-    lines: list[str] = []
+    report_lines = format_report(filtered_rows)
+    print("\n".join(report_lines))
 
+
+def format_report(rows: list) -> list[str]:
+    SEPARATOR = "-" * 72
     now = datetime.now().astimezone().isoformat(timespec="seconds")
-    lines.append(f"Report generated at: {now}")
-    lines.append("")
+    report = [f"Report generated at: {now}", ""]
 
     if not rows:
-        lines.append(
+        report.append(
             "No unavailable videos in your playlists (excluding ignored entries)."
         )
-        lines.append("")
-    else:
-        count = len(rows)
-        video_word = "video" if count == 1 else "videos"
+        return report
 
-        lines.append(f"{count} unavailable {video_word} in your playlists:")
-        lines.append("-" * 72)
-        lines.append("")
+    count = len(rows)
+    video_word = "video" if count == 1 else "videos"
 
-        for idx, row in enumerate(rows, start=1):
-            video_id, url, title, uploader, uploader_url, playlists = row
-            lines.append(f"{idx}. {title or '(no title)'}")
-            lines.append(
-                f"   Video: {url or f'https://www.youtube.com/watch?v={video_id}'}"
-            )
-            lines.append(f"   Uploader: {uploader or '(unknown)'}")
-            lines.append(f"   Uploader URL: {uploader_url or '(unknown)'}")
-            lines.append(f"   Playlists: {playlists or '(none)'}")
-            lines.append("")
+    report.append(f"{count} unavailable {video_word} in your playlists:")
+    report.append(SEPARATOR)
+    report.append("")
 
-        ids = {video_id for video_id, *_ in rows if video_id}
-        lines.append("-" * 72)
-        lines.append("List of video IDs:")
-        lines.append(
-            "Add them to your ignore list to exclude them from future reports."
+    for idx, row in enumerate(rows, start=1):
+        video_id, url, title, uploader, uploader_url, playlists = row
+        report.append(f"{idx}. {title or '(no title)'}")
+        report.append(
+            f"   Video: {url or f'https://www.youtube.com/watch?v={video_id}'}"
         )
-        lines.append("")
-        for video_id in ids:
-            lines.append(video_id)
+        report.append(f"   Uploader: {uploader or '(unknown)'}")
+        report.append(f"   Uploader URL: {uploader_url or '(unknown)'}")
+        report.append(f"   Playlists: {playlists or '(none)'}")
+        report.append("")
 
-    print("\n".join(lines) + "\n")
+    ids = {video_id for video_id, *_ in rows if video_id}
+    report.append(SEPARATOR)
+    report.append("List of video IDs:")
+    report.append("Add them to your ignore list to exclude them from future reports.")
+    report.append("")
+    for video_id in ids:
+        report.append(video_id)
+
+    return report
 
 
 def exclude_ignored_videos(rows: list, ignorelist_path: Path) -> list:
@@ -63,12 +64,16 @@ def exclude_ignored_videos(rows: list, ignorelist_path: Path) -> list:
     return filtered_rows
 
 
-def load_ignored_ids(ignorelist_path: Path) -> set:
+def load_ignored_ids(ignorelist_path: Path) -> set[str]:
     if not ignorelist_path.exists():
         return set()
 
-    with open(ignorelist_path, encoding="utf-8") as f:
-        ignored_ids = {
-            line.strip() for line in f if line.strip() and not line.startswith("#")
-        }
-        return ignored_ids
+    ignored_ids: set[str] = set()
+    with ignorelist_path.open(encoding="utf-8") as f:
+        for line in f:
+            cleaned = line.strip()
+            if not cleaned or cleaned.startswith("#"):
+                continue
+            ignored_ids.add(cleaned)
+
+    return ignored_ids
