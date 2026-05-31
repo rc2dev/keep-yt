@@ -4,7 +4,7 @@ import sys
 import sqlite3
 from keep_yt.config import load_config, ConfigError
 from keep_yt.db.schema import init_db
-from keep_yt.refresh import refresh_collection
+from keep_yt.collect import refresh_collection
 from keep_yt.report import write_report
 
 
