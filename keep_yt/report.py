@@ -1,6 +1,6 @@
 from pathlib import Path
 import sqlite3
-from datetime import datetime, UTC
+from datetime import datetime
 from keep_yt.db.queries import find_unavailable_videos, db_is_initialized
 
 

@@ -2,5 +2,4 @@ __pycache__/
 /config/*
 !config.sample.json
 /data/*
-report.txt
 *.private.md
