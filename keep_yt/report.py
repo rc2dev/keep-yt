@@ -1,25 +1,25 @@
 from pathlib import Path
 import sqlite3
 from datetime import datetime
-from keep_yt.db.queries import find_unavailable_videos, db_is_initialized
+from keep_yt.db.queries import (
+    find_unavailable_videos,
+    get_metadata_value,
+)
 
 
 def print_report(conn: sqlite3.Connection, ignorelist_path: Path) -> None:
-    if not db_is_initialized(conn):
-        print("Database is not initialized. Run 'collect' command first.")
-        return
-
+    last_collected_at = get_metadata_value(conn, "last_collected_at")
     rows = find_unavailable_videos(conn)
     filtered_rows = exclude_ignored_videos(rows, ignorelist_path)
 
-    report_lines = format_report(filtered_rows)
+    report_lines = format_report(filtered_rows, last_collected_at)
     print("\n".join(report_lines))
 
 
-def format_report(rows: list) -> list[str]:
+def format_report(rows: list, last_collected_at: str | None) -> list[str]:
     SEPARATOR = "-" * 72
-    now = datetime.now().astimezone().isoformat(timespec="seconds")
-    report = [f"Report generated at: {now}", ""]
+
+    report = [f"Last collected at: {last_collected_at or "N/A"}", ""]
 
     if not rows:
         report.append(

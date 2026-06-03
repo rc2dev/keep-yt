@@ -7,65 +7,89 @@ def init_db(conn: sqlite3.Connection) -> None:
 
     version = conn.execute("PRAGMA user_version").fetchone()[0]
 
-    if version == 0:
-        conn.executescript(
-            """--sql
-            CREATE TABLE IF NOT EXISTS playlists (
-                playlist_id TEXT PRIMARY KEY,
-                url TEXT,
-                title TEXT,
-                raw_json TEXT,
-                last_updated TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS videos (
-                video_id TEXT PRIMARY KEY,
-                url TEXT,
-                title TEXT,
-                uploader TEXT,
-                uploader_url TEXT,
-                duration INTEGER,
-                raw_json TEXT,
-                last_updated TEXT,
-                seems_unavailable INTEGER DEFAULT 0 CHECK (seems_unavailable IN (0, 1))
-            );
-
-            CREATE TABLE IF NOT EXISTS videos_snapshot (
-                video_id TEXT PRIMARY KEY,
-                url TEXT,
-                title TEXT,
-                uploader TEXT,
-                uploader_url TEXT,
-                duration INTEGER,
-                raw_json TEXT,
-                last_updated TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS playlist_videos (
-                playlist_id TEXT NOT NULL
-                    REFERENCES playlists (playlist_id) ON DELETE CASCADE,
-                video_id TEXT NOT NULL
-                    REFERENCES videos (video_id) ON DELETE CASCADE,
-                PRIMARY KEY (playlist_id, video_id)
-            );
-
-
-            -- videos_snapshot protections
-            CREATE TRIGGER IF NOT EXISTS prevent_update_videos_snapshot
-            BEFORE UPDATE ON videos_snapshot
-            BEGIN
-                SELECT RAISE(FAIL, 'videos_snapshot is read-only');
-            END;
-
-            CREATE TRIGGER prevent_delete_videos_snapshot
-            BEFORE DELETE ON videos_snapshot
-            BEGIN
-                SELECT RAISE(FAIL, 'cannot delete from videos_snapshot');
-            END;
-            """
-        )
-
-        conn.execute("PRAGMA user_version = 1")
-        version = 1
+    match version:
+        case 0:
+            create_schema_v2(conn)
+        case 1:
+            migrate_v1_to_v2(conn)
+        case 2:
+            pass
+        case _:
+            raise RuntimeError(f"Unsupported database version: {version}")
 
     conn.commit()
+
+
+def create_schema_v2(conn: sqlite3.Connection) -> None:
+    conn.executescript("""--sql
+        CREATE TABLE IF NOT EXISTS playlists (
+            playlist_id TEXT PRIMARY KEY,
+            url TEXT,
+            title TEXT,
+            raw_json TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS videos (
+            video_id TEXT PRIMARY KEY,
+            url TEXT,
+            title TEXT,
+            uploader TEXT,
+            uploader_url TEXT,
+            duration INTEGER,
+            raw_json TEXT,
+            seems_unavailable INTEGER DEFAULT 0 CHECK (seems_unavailable IN (0, 1))
+        );
+
+        CREATE TABLE IF NOT EXISTS videos_snapshot (
+            video_id TEXT PRIMARY KEY,
+            url TEXT,
+            title TEXT,
+            uploader TEXT,
+            uploader_url TEXT,
+            duration INTEGER,
+            raw_json TEXT,
+            inserted_at TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS playlist_videos (
+            playlist_id TEXT NOT NULL
+                REFERENCES playlists (playlist_id) ON DELETE CASCADE,
+            video_id TEXT NOT NULL
+                REFERENCES videos (video_id) ON DELETE CASCADE,
+            PRIMARY KEY (playlist_id, video_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS metadata (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        );
+
+
+        -- videos_snapshot protections
+        CREATE TRIGGER IF NOT EXISTS prevent_update_videos_snapshot
+        BEFORE UPDATE ON videos_snapshot
+        BEGIN
+            SELECT RAISE(FAIL, 'videos_snapshot is read-only');
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS prevent_delete_videos_snapshot
+        BEFORE DELETE ON videos_snapshot
+        BEGIN
+            SELECT RAISE(FAIL, 'cannot delete from videos_snapshot');
+        END;
+        """)
+    conn.execute("PRAGMA user_version = 2")
+
+
+def migrate_v1_to_v2(conn: sqlite3.Connection) -> None:
+    # SQLite 3.35+ supports DROP COLUMN; use that to keep this migration simple.
+    conn.execute("ALTER TABLE playlists DROP COLUMN last_updated")
+    conn.execute("ALTER TABLE videos DROP COLUMN last_updated")
+    conn.execute(
+        "ALTER TABLE videos_snapshot RENAME COLUMN last_updated TO inserted_at"
+    )
+    conn.execute("""CREATE TABLE IF NOT EXISTS metadata (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )""")
+    conn.execute("PRAGMA user_version = 2")

@@ -17,6 +17,7 @@ def cmd_collect(cfg) -> None:
 
 def cmd_report(cfg) -> None:
     with sqlite3.connect(cfg.db_path) as conn:
+        init_db(conn)
         print_report(conn, cfg.ignorelist_path)
 
 

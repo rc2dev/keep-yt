@@ -24,12 +24,10 @@ def find_unavailable_videos(conn: sqlite3.Connection):
     return cur.fetchall()
 
 
-def db_is_initialized(conn: sqlite3.Connection) -> bool:
-    cur = conn.execute("""
-        SELECT COUNT(*)
-        FROM sqlite_master
-        WHERE type='table'
-    """)
-
-    initialized = cur.fetchone()[0] > 0
-    return initialized
+def get_metadata_value(conn: sqlite3.Connection, key: str) -> str | None:
+    cur = conn.execute(
+        "SELECT value FROM metadata WHERE key = ?",
+        (key,),
+    )
+    row = cur.fetchone()
+    return row[0] if row else None

@@ -5,6 +5,7 @@ from keep_yt.db.writes import (
     insert_playlist_video,
     insert_video_snapshot,
     insert_video,
+    set_last_collected_at,
 )
 from keep_yt.yt import fetch_playlists, fetch_playlist_videos
 
@@ -18,6 +19,8 @@ def refresh_collection(
     for playlist in playlists:
         videos = fetch_playlist_videos(playlist["url"], yt_dlp)
         _save_playlist(conn, playlist, videos)
+
+    set_last_collected_at(conn)
 
 
 def _save_playlist(
