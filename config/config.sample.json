@@ -1,5 +1,5 @@
 {
-  "db_path": "{APP_ROOT}/data/yt.db",
+  "db_path": "{APP_ROOT}/data/data.db",
   "ignorelist_path": "{APP_ROOT}/config/ignorelist.txt",
   "playlists_url": "https://www.youtube.com/feed/playlists",
   "yt_dlp": "yt-dlp --cookies {APP_ROOT}/config/cookies.txt"
