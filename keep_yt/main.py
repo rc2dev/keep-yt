@@ -9,16 +9,8 @@ from keep_yt.collect import refresh_collection
 from keep_yt.report import print_report
 
 
-def cmd_collect(cfg) -> None:
-    with sqlite3.connect(cfg.db_path) as conn:
-        init_db(conn)
-        refresh_collection(conn, cfg.playlists_url, cfg.yt_dlp)
-
-
-def cmd_report(cfg) -> None:
-    with sqlite3.connect(cfg.db_path) as conn:
-        init_db(conn)
-        print_report(conn, cfg.ignorelist_path)
+def ensure_db_dir(cfg) -> None:
+    cfg.db_path.parent.mkdir(parents=True, exist_ok=True)
 
 
 def parse_args() -> argparse.Namespace:
@@ -38,15 +30,18 @@ def main() -> None:
         print(e)
         sys.exit(1)
 
-    cfg.db_path.parent.mkdir(parents=True, exist_ok=True)
-
     args = parse_args()
 
-    match args.command:
-        case "collect":
-            cmd_collect(cfg)
-        case "report":
-            cmd_report(cfg)
-        case _:
-            print(f"Unknown command: {args.command}")
-            sys.exit(1)
+    ensure_db_dir(cfg)
+
+    with sqlite3.connect(cfg.db_path) as conn:
+        init_db(conn)
+
+        match args.command:
+            case "collect":
+                refresh_collection(conn, cfg.playlists_url, cfg.yt_dlp)
+            case "report":
+                print_report(conn, cfg.ignorelist_path)
+            case _:
+                print(f"Unknown command: {args.command}")
+                sys.exit(1)
