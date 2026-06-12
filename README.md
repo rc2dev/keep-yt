@@ -1,16 +1,22 @@
 # keep-yt
 
-Never lose track of videos in your YouTube playlists. Save their metadata and automatically detect when they go missing.
+Find out which videos are gone from your YouTube playlists.
 
 ## Motivation
 
-If a video becomes unavailable on YouTube, its data, such as title and duration, is often lost.
+You've probably experienced this before: you save videos to a YouTube playlist, and sometime later one or more of them become unavailable (deleted or made private).
 
-You've probably run into this before: you saved videos to a playlists, only to come back later and find that some are deleted or set to private, with no clue what they used to be.
+You can see that a video is missing, but not which one it was. YouTube hides the video metadata (title, channel, etc) for those videos.
 
-This application aims to tackle this, storing video data and telling the user which videos went missing.
+This tool solves that problem by periodically collecting metadata from your playlists. Whenever a video disappears, you'll know which one it was.
+
+## Scope
+
+This tool is designed to preserve metadata from YouTube videos. It does not back up playlist contents or videos themselves.
 
 ## Installation
+
+- Make sure you have Python installed.
 
 - Clone the repository.
 
@@ -18,19 +24,25 @@ This application aims to tackle this, storing video data and telling the user wh
 
 ## Usage
 
-Run the `collect` command periodically.
+### The collect command
 
-It saves metadata for all videos in your playlists.
+The `collect` command saves metadata for all videos in your playlists.
 
-Over time, the application will detect videos that have become unavailable. Generate a report with the `report` command. Obviously, this becomes more useful after a few runs.
+It should be run periodically. I recommend scheduling it, for example using cron.
 
-If you notice any missing one that weren't detected, simply browse the database, as all the metadata has been preserved since the first run.
+### The report command
+
+The `report` command generates a report of all the missing videos with their metadata.
+
+It uses the metadata collected over time. So, obviously, it becomes more useful after you run the `collect` for a while.
+
+If you notice that a missing video wasn't detected by the report, you can inspect the database directly. Metadata is preserved from the first time a video is collected.
 
 ### Ignoring videos
 
 You may want to exclude some videos from the report.
 
-Just add their IDs, one per line, to the `ignore_ids` file. Lines starting with "#" are ignored.
+Add their IDs one per line to the `ignore_ids` file. Lines starting with "#" are treated as comments.
 
 ## License
 
