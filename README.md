@@ -44,6 +44,20 @@ You may want to exclude some videos from the report.
 
 Add their IDs one per line to the `ignore_ids` file. Lines starting with "#" are treated as comments.
 
+## Example setup
+
+In the following example, you'll receive a weekly report by email. Metadata is collected every night.
+
+First, configure your system to send email. Then add the following to your crontab:
+
+```crontab
+MAILTO=youremail@example.com
+
+# keep-yt·
+0 3 * * * /path_to_keep-yt/main.py collect > /dev/null
+0 7 * * 3 /path_to_keep-yt/main.py report·
+```
+
 ## License
 
 Copyright (C) 2026 [Rafael Cavalcanti](https://rafaelc.org/dev)
