@@ -5,7 +5,7 @@ import argparse
 import sqlite3
 from keep_yt.config import load_config, ConfigError
 from keep_yt.db.schema import init_db
-from keep_yt.collect import refresh_collection
+from keep_yt.collect import CollectionError, refresh_collection
 from keep_yt.report import print_report
 
 
@@ -34,14 +34,18 @@ def main() -> None:
 
     ensure_db_dir(cfg)
 
-    with sqlite3.connect(cfg.db_path) as conn:
-        init_db(conn)
+    try:
+        with sqlite3.connect(cfg.db_path) as conn:
+            init_db(conn)
 
-        match args.command:
-            case "collect":
-                refresh_collection(conn, cfg.playlists_url, cfg.yt_dlp)
-            case "report":
-                print_report(conn, cfg.ignorelist_path)
-            case _:
-                print(f"Unknown command: {args.command}")
-                sys.exit(1)
+            match args.command:
+                case "collect":
+                    refresh_collection(conn, cfg.playlists_url, cfg.yt_dlp)
+                case "report":
+                    print_report(conn, cfg.ignorelist_path)
+                case _:
+                    print(f"Unknown command: {args.command}")
+                    sys.exit(1)
+    except CollectionError as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)

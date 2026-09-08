@@ -7,20 +7,31 @@ from keep_yt.db.writes import (
     insert_video,
     set_last_collected_at,
 )
-from keep_yt.yt import fetch_playlists, fetch_playlist_videos
+from keep_yt.yt_connector import (
+    YtConnectorError,
+    fetch_playlists,
+    fetch_playlist_videos,
+)
+
+
+class CollectionError(Exception):
+    pass
 
 
 def refresh_collection(
     conn: sqlite3.Connection, playlists_url: str, yt_dlp: list[str]
 ) -> None:
-    clear_refreshable_data(conn)
+    try:
+        clear_refreshable_data(conn)
 
-    playlists = fetch_playlists(yt_dlp, playlists_url)
-    for playlist in playlists:
-        videos = fetch_playlist_videos(playlist["url"], yt_dlp)
-        _save_playlist(conn, playlist, videos)
+        playlists = fetch_playlists(yt_dlp, playlists_url)
+        for playlist in playlists:
+            videos = fetch_playlist_videos(playlist["url"], yt_dlp)
+            _save_playlist(conn, playlist, videos)
 
-    set_last_collected_at(conn)
+        set_last_collected_at(conn)
+    except YtConnectorError as e:
+        raise CollectionError(f"Could not collect data from YouTube.\n{e}") from e
 
 
 def _save_playlist(

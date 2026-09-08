@@ -1,21 +1,29 @@
-import subprocess
 import json
+import shlex
+import subprocess
+
+
+class YtConnectorError(Exception):
+    def __init__(self, command: list[str], stderr: str | None) -> None:
+        detail = stderr.strip() if stderr else "no details"
+        message = f"Command failed: {shlex.join(command)}\n{detail}"
+        super().__init__(message)
+        self.command = command
+        self.stderr = stderr
 
 
 def _run_yt_dlp(yt_dlp: list[str], args: list[str]) -> subprocess.CompletedProcess:
+    command = yt_dlp + args
     try:
-        result = subprocess.run(
-            yt_dlp + args,
+        return subprocess.run(
+            command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             check=True,
         )
-        return result
     except subprocess.CalledProcessError as e:
-        if e.stderr:
-            print(e.stderr)
-        raise
+        raise YtConnectorError(command, e.stderr) from e
 
 
 def fetch_playlists(yt_dlp: list[str], playlists_url: str) -> list[dict]:
