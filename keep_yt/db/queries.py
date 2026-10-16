@@ -12,7 +12,7 @@ def find_unavailable_videos(conn: sqlite3.Connection):
             s.title,
             s.uploader,
             s.uploader_url,
-            GROUP_CONCAT(p.title, ' | ') AS playlists
+            GROUP_CONCAT('  - ' || p.title || ': ' || p.url, char(10)) AS playlists
         FROM videos v
         JOIN videos_snapshot s ON s.video_id = v.video_id
         JOIN playlist_videos pv ON pv.video_id = v.video_id

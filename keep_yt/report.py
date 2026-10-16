@@ -42,7 +42,8 @@ def format_report(rows: list, last_collected_at: str | None) -> list[str]:
         )
         report.append(f"   Uploader: {uploader or '(unknown)'}")
         report.append(f"   Uploader URL: {uploader_url or '(unknown)'}")
-        report.append(f"   Playlists: {playlists or '(none)'}")
+        report.append(f"   Playlists:")
+        report.append(f"   {playlists or '(none)'}")
         report.append("")
 
     ids = {video_id for video_id, *_ in rows if video_id}
