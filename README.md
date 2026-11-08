@@ -29,7 +29,7 @@ This tool is designed to preserve metadata from YouTube videos. It does not back
   .venv/bin/python -m pip install -r requirements.txt
   ```
 
-- Write your config copying `config/config.sample.json` to `config/config.json`.
+- Write your config copying `config/config.sample.yaml` to `config/config.yaml`.
 
 ## Usage
 

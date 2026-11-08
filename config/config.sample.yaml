@@ -1,0 +1,19 @@
+# keep-yt config sample
+#
+# All available configuration is listed here.
+# You can use these placeholders:
+# - {APP_ROOT}: root directory of the application.
+ 
+db_path: '{APP_ROOT}/data/data.db'
+
+ignorelist_path: '{APP_ROOT}/config/ignorelist.txt'
+
+playlists_url: https://www.youtube.com/feed/playlists
+
+# yt-dlp options in API format. Use this script to convert from CLI format:
+# <https://github.com/yt-dlp/yt-dlp/blob/master/devscripts/cli_to_api.py>.
+# More info: <https://github.com/yt-dlp/yt-dlp#embedding-yt-dlp>.
+ytdl_options:
+  # Cookie file allowing access to your yt account. 
+  # You'll probably need this (or other auth method) to fetch all of your yt playlists.
+  cookiefile: '{APP_ROOT}/config/cookies.txt'

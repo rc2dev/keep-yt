@@ -1,6 +1,6 @@
 __pycache__/
 /config/*
-!config.sample.json
+!config.sample.yaml
 /data/*
 *.private.md
 .venv/
