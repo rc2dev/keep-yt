@@ -9,10 +9,13 @@ def init_db(conn: sqlite3.Connection) -> None:
 
     match version:
         case 0:
-            create_schema_v2(conn)
+            create_schema_v3(conn)
         case 1:
             migrate_v1_to_v2(conn)
+            migrate_v2_to_v3(conn)
         case 2:
+            migrate_v2_to_v3(conn)
+        case 3:
             pass
         case _:
             raise RuntimeError(f"Unsupported database version: {version}")
@@ -20,13 +23,13 @@ def init_db(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-def create_schema_v2(conn: sqlite3.Connection) -> None:
+def create_schema_v3(conn: sqlite3.Connection) -> None:
     conn.executescript("""--sql
         CREATE TABLE IF NOT EXISTS playlists (
             playlist_id TEXT PRIMARY KEY,
             url TEXT,
             title TEXT,
-            raw_json TEXT
+            metadata_json TEXT
         );
 
         CREATE TABLE IF NOT EXISTS videos (
@@ -36,7 +39,7 @@ def create_schema_v2(conn: sqlite3.Connection) -> None:
             uploader TEXT,
             uploader_url TEXT,
             duration INTEGER,
-            raw_json TEXT,
+            metadata_json TEXT,
             seems_unavailable INTEGER DEFAULT 0 CHECK (seems_unavailable IN (0, 1))
         );
 
@@ -47,7 +50,7 @@ def create_schema_v2(conn: sqlite3.Connection) -> None:
             uploader TEXT,
             uploader_url TEXT,
             duration INTEGER,
-            raw_json TEXT,
+            metadata_json TEXT,
             inserted_at TEXT
         );
 
@@ -78,7 +81,7 @@ def create_schema_v2(conn: sqlite3.Connection) -> None:
             SELECT RAISE(FAIL, 'cannot delete from videos_snapshot');
         END;
         """)
-    conn.execute("PRAGMA user_version = 2")
+    conn.execute("PRAGMA user_version = 3")
 
 
 def migrate_v1_to_v2(conn: sqlite3.Connection) -> None:
@@ -93,3 +96,16 @@ def migrate_v1_to_v2(conn: sqlite3.Connection) -> None:
             value TEXT
         )""")
     conn.execute("PRAGMA user_version = 2")
+
+
+def migrate_v2_to_v3(conn: sqlite3.Connection) -> None:
+    conn.execute("SAVEPOINT migrate_v2_to_v3")
+    try:
+        for table in ("playlists", "videos", "videos_snapshot"):
+            conn.execute(f"ALTER TABLE {table} RENAME COLUMN raw_json TO metadata_json")
+        conn.execute("PRAGMA user_version = 3")
+    except Exception:
+        conn.execute("ROLLBACK TO migrate_v2_to_v3")
+        conn.execute("RELEASE migrate_v2_to_v3")
+        raise
+    conn.execute("RELEASE migrate_v2_to_v3")

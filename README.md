@@ -14,15 +14,31 @@ This tool solves that problem by periodically collecting metadata from your play
 
 This tool is designed to preserve metadata from YouTube videos. It does not back up playlist contents or videos themselves.
 
-## Installation
+## Dependencies
 
-- Make sure you have Python installed.
+- Python 3.13+.
+
+## Installation
 
 - Clone the repository.
 
-- Write your config copying `config.sample.json` to `config.json`.
+- Create a virtual environment and install dependencies:
+
+  ```bash
+  python3 -m venv .venv
+  .venv/bin/python -m pip install -r requirements.txt
+  ```
+
+- Write your config copying `config/config.sample.json` to `config/config.json`.
 
 ## Usage
+
+Run commands using the virtual environment's Python:
+
+```bash
+.venv/bin/python main.py collect
+.venv/bin/python main.py report
+```
 
 ### The collect command
 
@@ -54,8 +70,16 @@ First, configure your system to send email. Then add the following to your cront
 MAILTO=youremail@example.com
 
 # keep-yt·
-0 3 * * * /path_to_keep-yt/main.py collect > /dev/null
-0 7 * * 3 /path_to_keep-yt/main.py report·
+0 3 * * * /path_to_keep-yt/.venv/bin/python /path_to_keep-yt/main.py collect > /dev/null
+0 7 * * 3 /path_to_keep-yt/.venv/bin/python /path_to_keep-yt/main.py report·
+```
+
+## Updating yt-dlp
+
+To update yt-dlp independently of keep-yt, run:
+
+```bash
+.venv/bin/python -m pip install --upgrade yt-dlp
 ```
 
 ## License

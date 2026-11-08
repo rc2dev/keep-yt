@@ -40,7 +40,7 @@ def main() -> None:
 
             match args.command:
                 case "collect":
-                    refresh_collection(conn, cfg.playlists_url, cfg.yt_dlp)
+                    refresh_collection(conn, cfg.playlists_url, cfg.ytdl_options)
                 case "report":
                     print_report(conn, cfg.ignorelist_path)
                 case _:

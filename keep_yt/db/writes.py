@@ -17,7 +17,7 @@ def insert_playlist(conn: sqlite3.Connection, playlist: dict) -> None:
     # OR IGNORE avoids crash if for some reason yt-dlp repeats ids.
     conn.execute(
         """--sql
-        INSERT OR IGNORE INTO playlists (playlist_id, url, title, raw_json)
+        INSERT OR IGNORE INTO playlists (playlist_id, url, title, metadata_json)
         VALUES (?, ?, ?, ?)
         """,
         (
@@ -55,7 +55,7 @@ def insert_video_snapshot(conn: sqlite3.Connection, video: dict) -> None:
             uploader,
             uploader_url,
             duration,
-            raw_json,
+            metadata_json,
             inserted_at
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -83,7 +83,7 @@ def insert_video(
     conn.execute(
         """--sql
         INSERT OR IGNORE INTO videos (
-            video_id, url, title, uploader, uploader_url, duration, raw_json, seems_unavailable )
+            video_id, url, title, uploader, uploader_url, duration, metadata_json, seems_unavailable )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (

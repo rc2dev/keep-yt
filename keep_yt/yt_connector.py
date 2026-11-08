@@ -1,40 +1,47 @@
-import json
-import shlex
-import subprocess
+from yt_dlp import YoutubeDL
+from yt_dlp.utils import DownloadError
 
 
 class YtConnectorError(Exception):
-    def __init__(self, command: list[str], stderr: str | None) -> None:
-        detail = stderr.strip() if stderr else "no details"
-        message = f"Command failed: {shlex.join(command)}\n{detail}"
-        super().__init__(message)
-        self.command = command
-        self.stderr = stderr
+    def __init__(self, url: str, detail: str) -> None:
+        super().__init__(f"Could not extract metadata from {url}\n{detail}")
+        self.url = url
 
 
-def _run_yt_dlp(yt_dlp: list[str], args: list[str]) -> subprocess.CompletedProcess:
-    command = yt_dlp + args
+class YtLogger:
+    def __init__(self) -> None:
+        self.messages: list[str] = []
+
+    def debug(self, message: str) -> None:
+        self.messages.append(message)
+
+    def warning(self, message: str) -> None:
+        self.messages.append(message)
+
+    def error(self, message: str) -> None:
+        self.messages.append(message)
+
+
+def fetch_entries(url: str, ytdl_options: dict) -> list[dict]:
+    # Equivalent CLI: yt-dlp <options> --flat-playlist --dump-json <url>
+
+    logger = YtLogger()
+    options = {
+        **ytdl_options,
+        "logger": logger,
+        "extract_flat": "in_playlist",
+    }
+
     try:
-        return subprocess.run(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=True,
-        )
-    except subprocess.CalledProcessError as e:
-        raise YtConnectorError(command, e.stderr) from e
+        with YoutubeDL(options) as ytdl:
+            info = ytdl.extract_info(url, download=False)
+            if info is None:
+                detail = "\n".join([*logger.messages, "No metadata returned"])
+                raise YtConnectorError(url, detail)
 
-
-def fetch_playlists(yt_dlp: list[str], playlists_url: str) -> list[dict]:
-    result = _run_yt_dlp(yt_dlp, ["--flat-playlist", "--dump-json", playlists_url])
-    lines = result.stdout.splitlines()
-    playlists = [json.loads(line) for line in lines]
-    return playlists
-
-
-def fetch_playlist_videos(playlist_url: str, yt_dlp: list[str]) -> list[dict]:
-    result = _run_yt_dlp(yt_dlp, ["--flat-playlist", "--dump-json", playlist_url])
-    lines = result.stdout.splitlines()
-    videos = [json.loads(line) for line in lines]
-    return videos
+            # Make all entry fields JSON-serializable (we use it in the metadata_json column).
+            info = ytdl.sanitize_info(info)
+            return info["entries"]
+    except (DownloadError, OSError) as e:
+        detail = "\n".join([*logger.messages, str(e)])
+        raise YtConnectorError(url, detail) from e
