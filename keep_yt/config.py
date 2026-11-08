@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
 import json
-import shlex
 
 APP_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = APP_ROOT / "config" / "config.json"
@@ -16,7 +15,7 @@ class Config:
     db_path: Path
     ignorelist_path: Path
     playlists_url: str
-    yt_dlp: list[str]
+    ytdl_options: dict
 
 
 def load_config() -> Config:
@@ -41,20 +40,19 @@ def _read_config() -> dict:
 def _parse_config(cfg: dict) -> Config:
     # Replace placeholders
     try:
-        cfg_fmt = {
-            k: v.format(APP_ROOT=APP_ROOT) if isinstance(v, str) else v
-            for k, v in cfg.items()
-        }
+        cfg_fmt = _format_placeholders(cfg)
     except (KeyError, ValueError, IndexError) as e:
         raise ConfigError(f"Invalid placeholder in config file: {e}")
 
     # Cast to correct types
     try:
+        if not isinstance(cfg_fmt["ytdl_options"], dict):
+            raise TypeError("ytdl_options must be an object")
         cfg_casted = {
             "db_path": Path(cfg_fmt["db_path"]),
             "ignorelist_path": Path(cfg_fmt["ignorelist_path"]),
             "playlists_url": cfg_fmt["playlists_url"],
-            "yt_dlp": shlex.split(cfg_fmt["yt_dlp"]),
+            "ytdl_options": cfg_fmt["ytdl_options"],
         }
     except KeyError as e:
         raise ConfigError(f"Missing key in config file: {e}")
@@ -62,3 +60,13 @@ def _parse_config(cfg: dict) -> Config:
         raise ConfigError(f"Invalid data in config file: {e}")
 
     return Config(**cfg_casted)
+
+
+def _format_placeholders(value):
+    if isinstance(value, str):
+        return value.replace("{APP_ROOT}", str(APP_ROOT))
+    if isinstance(value, dict):
+        return {key: _format_placeholders(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_format_placeholders(item) for item in value]
+    return value

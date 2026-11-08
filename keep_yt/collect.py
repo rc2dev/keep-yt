@@ -9,8 +9,7 @@ from keep_yt.db.writes import (
 )
 from keep_yt.yt_connector import (
     YtConnectorError,
-    fetch_playlists,
-    fetch_playlist_videos,
+    fetch_entries,
 )
 
 
@@ -19,14 +18,14 @@ class CollectionError(Exception):
 
 
 def refresh_collection(
-    conn: sqlite3.Connection, playlists_url: str, yt_dlp: list[str]
+    conn: sqlite3.Connection, playlists_url: str, ytdl_options: dict
 ) -> None:
     try:
         clear_refreshable_data(conn)
 
-        playlists = fetch_playlists(yt_dlp, playlists_url)
+        playlists = fetch_entries(playlists_url, ytdl_options)
         for playlist in playlists:
-            videos = fetch_playlist_videos(playlist["url"], yt_dlp)
+            videos = fetch_entries(playlist["url"], ytdl_options)
             _save_playlist(conn, playlist, videos)
 
         set_last_collected_at(conn)
