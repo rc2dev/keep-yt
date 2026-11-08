@@ -1,8 +1,0 @@
-{
-  "db_path": "{APP_ROOT}/data/data.db",
-  "ignorelist_path": "{APP_ROOT}/config/ignorelist.txt",
-  "playlists_url": "https://www.youtube.com/feed/playlists",
-  "ytdl_options": {
-    "cookiefile": "{APP_ROOT}/config/cookies.txt"
-  }
-}

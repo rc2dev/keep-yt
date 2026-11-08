@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from pathlib import Path
-import json
+import yaml
 
 APP_ROOT = Path(__file__).resolve().parents[1]
-CONFIG_PATH = APP_ROOT / "config" / "config.json"
+CONFIG_PATH = APP_ROOT / "config" / "config.yaml"
 
 
 class ConfigError(Exception):
@@ -25,19 +25,22 @@ def load_config() -> Config:
 def _read_config() -> dict:
     try:
         with open(CONFIG_PATH, encoding="utf-8") as f:
-            return json.load(f)
+            return yaml.safe_load(f)
     except FileNotFoundError:
         raise ConfigError(f"Config file not found: {CONFIG_PATH}.")
     # This includes "FileNotFoundError", but we'll treat it separately as it is common.
     except OSError as e:
         raise ConfigError(f"OS/Filesystem error reading config: {e}")
-    except json.JSONDecodeError as e:
-        raise ConfigError(f"Couldn't parse JSON on config: {e}")
+    except yaml.YAMLError as e:
+        raise ConfigError(f"Couldn't parse YAML on config: {e}")
     except UnicodeDecodeError as e:
         raise ConfigError(f"Config file must be UTF-8: {e}")
 
 
 def _parse_config(cfg: dict) -> Config:
+    if not isinstance(cfg, dict):
+        raise ConfigError("Config file must contain a YAML mapping")
+
     # Replace placeholders
     try:
         cfg_fmt = _format_placeholders(cfg)
