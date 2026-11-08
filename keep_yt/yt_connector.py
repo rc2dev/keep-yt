@@ -8,7 +8,7 @@ class YtConnectorError(Exception):
         self.url = url
 
 
-class YtLogger:
+class YtdlLogger:
     def __init__(self) -> None:
         self.messages: list[str] = []
 
@@ -23,9 +23,9 @@ class YtLogger:
 
 
 def fetch_entries(url: str, ytdl_options: dict) -> list[dict]:
-    # Equivalent CLI: yt-dlp <options> --flat-playlist --dump-json <url>
+    # CLI equivalent: yt-dlp <options> --flat-playlist --dump-json <url>
 
-    logger = YtLogger()
+    logger = YtdlLogger()
     options = {
         **ytdl_options,
         "logger": logger,
