@@ -1,6 +1,6 @@
 # keep-yt
 
-Find out which videos are gone from your YouTube playlists.
+Keep track of missing videos in your YouTube playlists.
 
 ## Motivation
 
